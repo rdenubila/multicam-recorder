@@ -15,6 +15,7 @@ export default App
 
 declare global {
   interface DocumentEventMap {
+    'resetCamera': CustomEvent<{}>
     'startRecord': CustomEvent<{}>
     'stopRecord': CustomEvent<{}>
   }

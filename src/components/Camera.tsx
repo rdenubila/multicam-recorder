@@ -1,6 +1,5 @@
 import { useContext, useEffect, useRef, useState } from "react"
 import CameraService from "../services/camera.service";
-import JSZip from "jszip";
 import { GlobalStateContext, RecordCamera } from "../wrapper/GlobalContext";
 import { Button, Card } from "antd";
 import { RiDeleteBinFill } from "react-icons/ri";
@@ -19,9 +18,6 @@ function Camera({ cameraInfo }: Props) {
     const startRecord = () => mediaRecorder?.start()
     const stopRecord = () => mediaRecorder?.stop()
 
-    useEventListener('startRecord', startRecord, documentRef)
-    useEventListener('stopRecord', stopRecord, documentRef)
-
     const initLiveCam = async () => {
         if (videoLive.current) {
             const stream = await CameraService.getStream(cameraInfo.deviceId);
@@ -31,17 +27,15 @@ function Camera({ cameraInfo }: Props) {
 
             newMediaRecorder.addEventListener('dataavailable', async event => {
                 addBlob(cameraInfo.deviceId, event.data)
-                // console.log(URL.createObjectURL(event.data))
-                // var zip = new JSZip();
-                // zip.file("video1.mkv", event.data);
-
-                // const base64 = await zip.generateAsync({ type: "base64" });
-                // location.href = "data:application/zip;base64," + base64;
             })
 
             setMediaRecorder(newMediaRecorder);
         }
     }
+
+    useEventListener('resetCamera', initLiveCam, documentRef)
+    useEventListener('startRecord', startRecord, documentRef)
+    useEventListener('stopRecord', stopRecord, documentRef)
 
     useEffect(() => {
         initLiveCam();
