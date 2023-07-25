@@ -46,7 +46,7 @@ export default function AddCameraModal({ isModalOpen, onCloseModal }: Props) {
 
                 <Form
                     form={form}
-                    name="basic"
+                    name="addCameraForm"
                     labelCol={{ span: 6 }}
                     wrapperCol={{ span: 18 }}
                 >

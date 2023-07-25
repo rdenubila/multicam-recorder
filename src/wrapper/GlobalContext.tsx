@@ -1,5 +1,8 @@
 import JSZip from "jszip"
 import { createContext, useEffect, useState } from "react"
+import slugify from "slugify"
+import startAudio from "../assets/audios/start.wav"
+import stopAudio from "../assets/audios/start2.wav"
 
 export type RecordCamera = {
     name: string
@@ -10,6 +13,8 @@ export type RecordCamera = {
 export type AppConfig = {
     takeName: string
     videoPattern: string
+    startDelay: number
+    recordDuration: number
 }
 
 export interface IGlobalContext {
@@ -18,7 +23,11 @@ export interface IGlobalContext {
     removeCamera: (camId: string) => void
     addBlob: (camId: string, blob: Blob) => void
     toggleRecord: () => void
+    startRecord: () => void
+    stopRecord: () => void
     isRecording: boolean
+    currentConfig: AppConfig
+    setCurrentConfig: (config: AppConfig) => void
 }
 
 export const GlobalStateContext = createContext<IGlobalContext>({} as IGlobalContext);
@@ -27,13 +36,22 @@ type Props = {
     children: JSX.Element
 }
 
+const APP_CONFIG_KEY = "appConfig";
+
+const defaultConfig: AppConfig =
+    localStorage.getItem(APP_CONFIG_KEY) ?
+        JSON.parse(localStorage.getItem(APP_CONFIG_KEY) || "{}") as AppConfig :
+        {
+            takeName: "New Take Name",
+            videoPattern: 'cam{index}_{takeName}.mkv',
+            recordDuration: 0,
+            startDelay: 0
+        }
+
 function GlobalContext({ children }: Props) {
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const [cameras, setCameras] = useState<RecordCamera[]>([]);
-    const [config, setConfig] = useState<AppConfig>({
-        takeName: "teste",
-        videoPattern: 'cam{index}_{takeName}.mkv'
-    });
+    const [config, setConfig] = useState<AppConfig>(defaultConfig);
 
     const addCamera = (newCamera: RecordCamera) => setCameras([...cameras, newCamera]);
     const removeCamera = (camId: string) => setCameras(cameras.filter(cam => cam.deviceId != camId));
@@ -74,11 +92,11 @@ function GlobalContext({ children }: Props) {
 
             var link = document.createElement('a');
             if (typeof link.download === 'string') {
-                document.body.appendChild(link); // Firefox requires the link to be in the body
+                document.body.appendChild(link);
                 link.download = `${config.takeName}.zip`;
                 link.href = uri;
                 link.click();
-                document.body.removeChild(link); // remove the link when done
+                document.body.removeChild(link);
             } else {
                 location.replace(uri);
             }
@@ -91,7 +109,7 @@ function GlobalContext({ children }: Props) {
     const handleFilename = (index: number) => {
         return config.videoPattern
             .replace('{index}', index.toString())
-            .replace('{takeName}', config.takeName)
+            .replace('{takeName}', slugify(config.takeName, { replacement: '_', lower: true }))
     }
 
     const toggleRecord = () => {
@@ -101,14 +119,26 @@ function GlobalContext({ children }: Props) {
             stopRecord()
     }
 
+    const playAudio = (audioName?: string) => {
+        const audio = new Audio(audioName || startAudio);
+        audio.play()
+    }
+
     const startRecord = () => {
+        playAudio();
         document.dispatchEvent(new Event("startRecord"))
         setIsRecording(true);
     }
 
     const stopRecord = () => {
+        playAudio(stopAudio);
         document.dispatchEvent(new Event("stopRecord"))
         setIsRecording(false);
+    }
+
+    const saveConfig = (newConfig: AppConfig) => {
+        setConfig(newConfig);
+        localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(newConfig))
     }
 
     return <GlobalStateContext.Provider value={{
@@ -117,7 +147,11 @@ function GlobalContext({ children }: Props) {
         addCamera,
         removeCamera,
         toggleRecord,
-        addBlob
+        startRecord,
+        stopRecord,
+        addBlob,
+        currentConfig: config,
+        setCurrentConfig: saveConfig
     }}>
         {children}
     </GlobalStateContext.Provider>
