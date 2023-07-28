@@ -43,7 +43,7 @@ const defaultConfig: AppConfig =
         JSON.parse(localStorage.getItem(APP_CONFIG_KEY) || "{}") as AppConfig :
         {
             takeName: "New Take Name",
-            videoPattern: 'cam{index}_{takeName}.mkv',
+            videoPattern: 'cam{index}_{takeName}.mp4',
             recordDuration: 0,
             startDelay: 0
         }
@@ -83,9 +83,14 @@ function GlobalContext({ children }: Props) {
     const prepareDownloadFile = async () => {
         if (allCamHasBlob()) {
             var zip = new JSZip();
+            let txt = "";
             cameras.forEach((cam, index) => {
-                zip.file(handleFilename(index), cam.blob);
+                const filename = handleFilename(index);
+                zip.file(`_${filename}`, cam.blob);
+                txt += `docker run --rm -it -v \${pwd}:/config linuxserver/ffmpeg -i /config/_${filename} -y /config/${filename}\n`
             })
+
+            zip.file("ffmpeg_commands.txt", txt);
 
             const base64 = await zip.generateAsync({ type: "base64" });
             const uri = "data:application/zip;base64," + base64;

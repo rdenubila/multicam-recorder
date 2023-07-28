@@ -32,7 +32,8 @@ export default class CameraService {
                     ideal: 30,
                     max: 60,
                 },
-            }
+            },
+            audio: true,
         })
     }
 

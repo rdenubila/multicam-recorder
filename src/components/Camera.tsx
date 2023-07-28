@@ -23,7 +23,7 @@ function Camera({ cameraInfo }: Props) {
             const stream = await CameraService.getStream(cameraInfo.deviceId);
             videoLive.current.srcObject = stream
 
-            const newMediaRecorder = new MediaRecorder(stream)
+            const newMediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' })
 
             newMediaRecorder.addEventListener('dataavailable', async event => {
                 addBlob(cameraInfo.deviceId, event.data)
