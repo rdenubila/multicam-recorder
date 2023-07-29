@@ -1,5 +1,5 @@
 
-import { Button, Form, Input, Modal, Select } from "antd";
+import { Button, Form, Input, Modal, Select, Space } from "antd";
 import CameraService from "../services/camera.service";
 import { useContext, useEffect, useState } from "react";
 import { GlobalStateContext } from "../wrapper/GlobalContext";
@@ -12,7 +12,7 @@ interface Props {
 
 export default function AddCameraModal({ isModalOpen, onCloseModal }: Props) {
     const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-    const { addCamera } = useContext(GlobalStateContext)
+    const { addCamera, cameraList } = useContext(GlobalStateContext)
 
     const loadDevices = async () => {
         const deviceList = await CameraService.listCamera();
@@ -59,20 +59,24 @@ export default function AddCameraModal({ isModalOpen, onCloseModal }: Props) {
                         <Input />
                     </Form.Item>
 
-                    <Form.Item
-                        label="Camera"
-                        name="deviceId"
-                        rules={[{ required: true }]}
-                    >
-                        <div className="flex gap-2">
-                            <Select
-                                options={devices.map(device => ({
-                                    value: device.deviceId,
-                                    label: `${device.label} (${device.deviceId})`,
-                                }))}
-                            />
+                    <Form.Item label="Camera">
+                        <Space>
+                            <Form.Item
+                                name="deviceId"
+                                noStyle
+                                rules={[{ required: true }]}
+                            >
+                                <Select
+                                    style={{ width: 313 }}
+                                    options={devices.map(device => ({
+                                        disabled: cameraList.some(cam => cam.deviceId === device.deviceId),
+                                        value: device.deviceId,
+                                        label: `${device.label} (${device.deviceId})`,
+                                    }))}
+                                />
+                            </Form.Item>
                             <Button onClick={loadDevices} icon={<RiRefreshLine />} />
-                        </div>
+                        </Space>
                     </Form.Item>
                 </Form>
             </Modal>

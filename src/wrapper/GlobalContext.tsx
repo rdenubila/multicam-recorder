@@ -15,6 +15,8 @@ export type AppConfig = {
     videoPattern: string
     startDelay: number
     recordDuration: number
+    exportConversionCommands: boolean,
+    desiredFps: number
 }
 
 export interface IGlobalContext {
@@ -45,7 +47,9 @@ const defaultConfig: AppConfig =
             takeName: "New Take Name",
             videoPattern: 'cam{index}_{takeName}.mp4',
             recordDuration: 0,
-            startDelay: 0
+            startDelay: 0,
+            exportConversionCommands: true,
+            desiredFps: 60
         }
 
 function GlobalContext({ children }: Props) {
@@ -85,12 +89,13 @@ function GlobalContext({ children }: Props) {
             var zip = new JSZip();
             let txt = "";
             cameras.forEach((cam, index) => {
-                const filename = handleFilename(index);
+                const filename = handleFilename(index, cam);
                 zip.file(`_${filename}`, cam.blob);
-                txt += `docker run --rm -it -v \${pwd}:/config linuxserver/ffmpeg -i /config/_${filename} -y /config/${filename}\n`
+                txt += `docker run --rm -it -v \${pwd}:/config linuxserver/ffmpeg -i /config/_${filename} -r ${config.desiredFps} -y /config/${filename}\n`
             })
 
-            zip.file("ffmpeg_commands.txt", txt);
+            if (config.exportConversionCommands)
+                zip.file("ffmpeg_commands.txt", txt);
 
             const base64 = await zip.generateAsync({ type: "base64" });
             const uri = "data:application/zip;base64," + base64;
@@ -111,10 +116,12 @@ function GlobalContext({ children }: Props) {
         }
     }
 
-    const handleFilename = (index: number) => {
+    const handleFilename = (index: number, cam: RecordCamera) => {
         return config.videoPattern
             .replace('{index}', index.toString())
             .replace('{takeName}', slugify(config.takeName, { replacement: '_', lower: true }))
+            .replace('{camName}', slugify(cam.name, { replacement: '_', lower: true }))
+            .replace('{camId}', cam.deviceId)
     }
 
     const toggleRecord = () => {

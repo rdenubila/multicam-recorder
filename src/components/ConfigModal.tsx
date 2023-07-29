@@ -1,5 +1,5 @@
 
-import { Form, Input, Modal, Tooltip } from "antd";
+import { Form, Input, Modal, Switch, Tooltip } from "antd";
 import { useContext, useEffect } from "react";
 import { GlobalStateContext } from "../wrapper/GlobalContext";
 import { RiInformationFill } from "react-icons/ri";
@@ -29,6 +29,7 @@ export default function ConfigModal({ isModalOpen, onCloseModal }: Props) {
     };
 
     const [form] = Form.useForm();
+    const showExportFields = Form.useWatch('exportConversionCommands', form);
 
     useEffect(() => {
         if (isModalOpen)
@@ -42,8 +43,9 @@ export default function ConfigModal({ isModalOpen, onCloseModal }: Props) {
                 <Form
                     form={form}
                     name="configForm"
-                    labelCol={{ span: 8 }}
-                    wrapperCol={{ span: 16 }}
+                    labelCol={{ span: 10 }}
+                    wrapperCol={{ span: 14 }}
+                    initialValues={currentConfig}
                 >
                     <Form.Item
                         label="Take Name"
@@ -55,7 +57,7 @@ export default function ConfigModal({ isModalOpen, onCloseModal }: Props) {
 
                     <Form.Item
                         label={
-                            <Tooltip title="The name of the video file. You can use these tags to customize your file: {index}, {takeName}">
+                            <Tooltip title="The name of the video file. You can use these tags to customize your file: {index}, {takeName}, {camName}, {camId}">
                                 Filename Pattern
                                 <RiInformationFill />
                             </Tooltip>}
@@ -89,6 +91,23 @@ export default function ConfigModal({ isModalOpen, onCloseModal }: Props) {
                     >
                         <Input type="number" min={0} />
                     </Form.Item>
+
+                    <Form.Item
+                        label="Export Conversion Commands"
+                        name="exportConversionCommands"
+                    >
+                        <Switch checked={form.getFieldValue("exportConversionCommands")} />
+                    </Form.Item>
+
+                    {showExportFields &&
+                        <Form.Item
+                            label="Desired FPS (framerate)"
+                            name="desiredFps"
+                            rules={[{ required: true }]}
+                        >
+                            <Input type="number" min={0} />
+                        </Form.Item>
+                    }
 
                 </Form>
             </Modal>
