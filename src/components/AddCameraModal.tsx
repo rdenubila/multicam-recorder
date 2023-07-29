@@ -1,8 +1,9 @@
 
-import { Form, Input, Modal, Select } from "antd";
+import { Button, Form, Input, Modal, Select } from "antd";
 import CameraService from "../services/camera.service";
 import { useContext, useEffect, useState } from "react";
 import { GlobalStateContext } from "../wrapper/GlobalContext";
+import { RiRefreshLine } from "react-icons/ri";
 
 interface Props {
     isModalOpen: boolean,
@@ -63,12 +64,15 @@ export default function AddCameraModal({ isModalOpen, onCloseModal }: Props) {
                         name="deviceId"
                         rules={[{ required: true }]}
                     >
-                        <Select
-                            options={devices.map(device => ({
-                                value: device.deviceId,
-                                label: `${device.label} (${device.deviceId})`,
-                            }))}
-                        />
+                        <div className="flex gap-2">
+                            <Select
+                                options={devices.map(device => ({
+                                    value: device.deviceId,
+                                    label: `${device.label} (${device.deviceId})`,
+                                }))}
+                            />
+                            <Button onClick={loadDevices} icon={<RiRefreshLine />} />
+                        </div>
                     </Form.Item>
                 </Form>
             </Modal>
