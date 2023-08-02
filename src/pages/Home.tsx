@@ -4,10 +4,10 @@ import { GlobalStateContext } from "../wrapper/GlobalContext";
 import { useContext } from "react";
 import Camera from "../components/Camera";
 
-const { Header, Content } = Layout;
+const { Header, Content, Footer } = Layout;
 
 function Home() {
-  const { cameraList } = useContext(GlobalStateContext)
+  const { cameraList, server } = useContext(GlobalStateContext)
 
   return (
     <>
@@ -30,6 +30,9 @@ function Home() {
             }
           </div>
         </Content>
+        <Footer>
+          Server ID: {server?.id}
+        </Footer>
       </Layout>
     </>
   )

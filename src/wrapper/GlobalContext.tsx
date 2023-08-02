@@ -3,6 +3,7 @@ import { createContext, useEffect, useState } from "react"
 import slugify from "slugify"
 import startAudio from "../assets/audios/start.wav"
 import stopAudio from "../assets/audios/start2.wav"
+import ServerService from "../services/server.service"
 
 export type RecordCamera = {
     name: string
@@ -30,6 +31,7 @@ export interface IGlobalContext {
     isRecording: boolean
     currentConfig: AppConfig
     setCurrentConfig: (config: AppConfig) => void
+    server?: ServerService
 }
 
 export const GlobalStateContext = createContext<IGlobalContext>({} as IGlobalContext);
@@ -51,6 +53,10 @@ const defaultConfig: AppConfig =
             exportConversionCommands: true,
             desiredFps: 60
         }
+
+const server = new ServerService();
+server.attach((message) => console.log(message))
+
 
 function GlobalContext({ children }: Props) {
     const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -163,7 +169,8 @@ function GlobalContext({ children }: Props) {
         stopRecord,
         addBlob,
         currentConfig: config,
-        setCurrentConfig: saveConfig
+        setCurrentConfig: saveConfig,
+        server
     }}>
         {children}
     </GlobalStateContext.Provider>

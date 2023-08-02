@@ -12,6 +12,8 @@
   "dependencies": {
     "antd": "^5.7.0",
     "jszip": "^3.10.1",
+    "peerjs": "^1.4.7",
+    "random-string-generator": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.10.1",
