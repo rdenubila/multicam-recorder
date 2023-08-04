@@ -4,7 +4,6 @@ import slugify from "slugify"
 import startAudio from "../assets/audios/start.wav"
 import stopAudio from "../assets/audios/start2.wav"
 import ServerService, { Message } from "../services/server.service"
-import { DataConnection, MediaConnection } from "peerjs"
 
 export type RecordCamera = {
     name: string
