@@ -2,9 +2,14 @@ import Peer, { DataConnection, MediaConnection } from "peerjs";
 import random from "random-string-generator";
 
 export type Message = {
-    type: "register-device" | "message"
-    message?: string
-    stream?: MediaStream
+    type: "receive-call" | "receive-conn" | "receive-blob" | "message"
+    message?: string | any
+    stream?: MediaStream,
+    conn?: DataConnection | MediaConnection
+}
+
+export type SendAction = {
+    action: "start-record" | "stop-record"
 }
 
 export type Observer = (message: Message) => void;
@@ -38,32 +43,43 @@ export default class ServerService {
         console.info('My peer ID is: ' + id);
     }
 
-    private handleConnection(conn: DataConnection) {
-        console.info(conn);
-        this._conn.push(conn)
-    }
-
     private handleCall(call: MediaConnection) {
         console.info("Receiving call");
         call.on("stream", stream => this.registerDevice(call, stream))
         call.answer()
+    }
 
+    private handleConnection(conn: DataConnection) {
+        conn.on("data", (data) => this.handleData(data))
+        this._conn.push(conn)
+    }
+
+    private handleData(message: any) {
+        this.notify({
+            type: "receive-blob",
+            message: message.message
+        })
     }
 
     private registerDevice(call: MediaConnection, stream: MediaStream) {
-        console.log(call, stream);
-    
         this.notify({
-            type: "register-device",
+            type: "receive-call",
             message: JSON.stringify({
-                data: call.connectionId
+                deviceId: call.metadata.deviceId
             }),
-            stream
+            stream,
+            conn: call
         })
     }
 
     get id() {
         return this._id
+    }
+
+    sendMessage(action: SendAction) {
+        for (const conn of this._conn) {
+            conn.send(action)
+        }
     }
 
 }

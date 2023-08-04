@@ -26,7 +26,10 @@ export default function AddCameraModal({ isModalOpen, onCloseModal }: Props) {
     const handleOk = async () => {
         try {
             await form.validateFields()
-            addCamera(form.getFieldsValue())
+            addCamera({
+                ...form.getFieldsValue(),
+                type: "local"
+            })
             form.resetFields();
             onCloseModal()
         } catch (e) {

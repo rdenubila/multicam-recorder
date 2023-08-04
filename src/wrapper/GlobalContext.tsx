@@ -3,12 +3,17 @@ import { createContext, useEffect, useState } from "react"
 import slugify from "slugify"
 import startAudio from "../assets/audios/start.wav"
 import stopAudio from "../assets/audios/start2.wav"
-import ServerService from "../services/server.service"
+import ServerService, { Message } from "../services/server.service"
+import { DataConnection, MediaConnection } from "peerjs"
 
 export type RecordCamera = {
     name: string
     deviceId: string
     blob?: Blob
+    type: "local" | "stream"
+    streamData?: {
+        stream?: MediaStream
+    }
 }
 
 export type AppConfig = {
@@ -55,15 +60,16 @@ const defaultConfig: AppConfig =
         }
 
 const server = new ServerService();
-server.attach((message) => console.log(message))
-
 
 function GlobalContext({ children }: Props) {
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const [cameras, setCameras] = useState<RecordCamera[]>([]);
     const [config, setConfig] = useState<AppConfig>(defaultConfig);
 
-    const addCamera = (newCamera: RecordCamera) => setCameras([...cameras, newCamera]);
+    const addCamera = (newCamera: RecordCamera) => setCameras([
+        ...cameras.filter(cam => cam.deviceId != newCamera.deviceId),
+        newCamera
+    ]);
     const removeCamera = (camId: string) => setCameras(cameras.filter(cam => cam.deviceId != camId));
     const allCamHasBlob = () => cameras.length > 0 && cameras.every(cam => Boolean(cam.blob))
 
@@ -86,9 +92,36 @@ function GlobalContext({ children }: Props) {
         document.dispatchEvent(new Event("resetCamera"))
     }
 
+    const handleServerMessage = (message: Message) => {
+        switch (message.type) {
+            case "receive-call":
+                const deviceId = JSON.parse(message.message || "").deviceId;
+                const currentCam: RecordCamera = cameras.find(cam => cam.deviceId == deviceId) || { deviceId, name: "Stream Camera", type: "stream" };
+                const streamData = currentCam.streamData || {}
+                currentCam.streamData = {
+                    ...streamData,
+                    stream: message.stream
+                }
+                console.log(currentCam);
+                addCamera(currentCam);
+                break;
+            case "receive-blob":
+                addBlob(
+                    message.message.deviceId,
+                    message.message.blob
+                )
+                break;
+        }
+
+    }
+
     useEffect(() => {
         prepareDownloadFile();
     }, [cameras])
+
+    useEffect(() => {
+        server.attach(handleServerMessage)
+    }, [])
 
     const prepareDownloadFile = async () => {
         if (allCamHasBlob()) {
@@ -96,8 +129,10 @@ function GlobalContext({ children }: Props) {
             let txt = "";
             cameras.forEach((cam, index) => {
                 const filename = handleFilename(index, cam);
-                zip.file(`_${filename}`, cam.blob);
-                txt += `docker run --rm -it -v \${pwd}:/config linuxserver/ffmpeg -i /config/_${filename} -r ${config.desiredFps} -y /config/${filename}\n`
+                if (cam.blob) {
+                    zip.file(`_${filename}`, cam.blob);
+                    txt += `docker run --rm -it -v \${pwd}:/config linuxserver/ffmpeg -i /config/_${filename} -r ${config.desiredFps} -y /config/${filename}\n`
+                }
             })
 
             if (config.exportConversionCommands)
@@ -145,12 +180,14 @@ function GlobalContext({ children }: Props) {
     const startRecord = () => {
         playAudio();
         document.dispatchEvent(new Event("startRecord"))
+        server.sendMessage({ action: "start-record" })
         setIsRecording(true);
     }
 
     const stopRecord = () => {
         playAudio(stopAudio);
         document.dispatchEvent(new Event("stopRecord"))
+        server.sendMessage({ action: "stop-record" })
         setIsRecording(false);
     }
 

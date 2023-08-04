@@ -17,6 +17,14 @@ function Camera({ cameraInfo }: Props) {
 
     const startRecord = () => mediaRecorder?.start()
     const stopRecord = () => mediaRecorder?.stop()
+    
+    const resetCamera = () => {
+        if (cameraInfo.type === "local") {
+            initLiveCam();
+        } else {
+            initStreamCam()
+        }
+    }
 
     const initLiveCam = async () => {
         if (videoLive.current) {
@@ -33,12 +41,18 @@ function Camera({ cameraInfo }: Props) {
         }
     }
 
-    useEventListener('resetCamera', initLiveCam, documentRef)
+    const initStreamCam = async () => {
+        if (videoLive.current && cameraInfo.streamData?.stream) {
+            videoLive.current.srcObject = cameraInfo.streamData?.stream
+        }
+    }
+
+    useEventListener('resetCamera', resetCamera, documentRef)
     useEventListener('startRecord', startRecord, documentRef)
     useEventListener('stopRecord', stopRecord, documentRef)
 
     useEffect(() => {
-        initLiveCam();
+        resetCamera();
     }, [videoLive])
 
     const removeCam = () => removeCamera(cameraInfo.deviceId)
