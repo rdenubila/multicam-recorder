@@ -22,11 +22,22 @@ export default class ServerService {
     private _id: string;
 
     constructor() {
-        this._id = `MCR-${random(3, "numeric")}-${random(3, "numeric")}`
+        this._id = this.getId()
         this._peer = new Peer(this._id);
         this._peer.on('open', (id: string) => this.openConnection(id));
         this._peer.on('connection', (conn: DataConnection) => this.handleConnection(conn));
         this._peer.on('call', (call: MediaConnection) => this.handleCall(call));
+    }
+
+    private getId(): string {
+        let id = sessionStorage.getItem("server.sessionId");
+
+        if (!id) {
+            id = `MCR-${random(3, "numeric")}-${random(3, "numeric")}`;
+            sessionStorage.setItem("server.sessionId", id);
+        }
+
+        return id;
     }
 
     attach(observer: Observer) {
