@@ -25,8 +25,8 @@ export default class CameraService {
         return navigator.mediaDevices.getUserMedia({
             video: {
                 deviceId,
-                width: 9999,
-                height: 9999,
+                width: 1920,
+                height: 1080,
                 frameRate: {
                     min: 24,
                     ideal: 30,
