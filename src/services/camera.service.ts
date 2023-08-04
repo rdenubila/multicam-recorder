@@ -1,6 +1,15 @@
 
 export default class CameraService {
 
+    private static types = [
+        "video/webm",
+        "video/webm;codecs=vp8",
+        "video/webm;codecs=daala",
+        "video/webm;codecs=h264",
+        "video/mpeg",
+        "video/mp4",
+    ];
+
     static async listCamera() {
 
         await navigator.mediaDevices.getUserMedia({
@@ -35,6 +44,14 @@ export default class CameraService {
             },
             audio: true,
         })
+    }
+
+    static supportedType() {
+        for (const type of this.types) {
+            if (MediaRecorder.isTypeSupported(type))
+                return type
+        }
+        return 'video/webm'
     }
 
 }
